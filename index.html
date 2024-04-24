@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script type="module">
+    import { addArray, multiplyArray, divideArray, subtractArray, fibonacciArray } from "./build/release.js";
+    import { add, multiply, divide, subtract, fibonacci } from "./js/operations.js"
+    import { addFor, multiplyFor, divideFor, subtractFor, fibonacciFor } from "./js/operationsFor.js"
+
+    const TEST_SIZE = 10000000;
+    const TEST_FACTOR = 3450;
+    const FIB_TO = 1000000;
+    const arrayTest = Array.from({length: TEST_SIZE}, (_, b) => b);
+    const fibArray = Array.from({length: FIB_TO}, (_, b) => b);
+    
+    const processorWoker = new Worker('worker.js', { type: "classic" });
+    processorWoker.onmessage = (e) => {
+      if (e.data === 'done') {
+        processorWoker.terminate()
+      }
+    }
+
+    processorWoker.postMessage({data: arrayTest, action: 'payloadArray'});
+    processorWoker.postMessage({data: fibArray, action: 'payloadFib'});
+    processorWoker.postMessage({action: 'add', factor: TEST_FACTOR});
+    processorWoker.postMessage({action: 'multiply', factor: TEST_FACTOR});
+    processorWoker.postMessage({action: 'divide', factor: TEST_FACTOR});
+    processorWoker.postMessage({action: 'subtract', factor: TEST_FACTOR});
+    processorWoker.postMessage({action: 'fib', factor: TEST_FACTOR});
+    processorWoker.postMessage({action: 'done'});
+
+    function execute(parser, data, title,) {
+      console.time(title)
+      parser(data, TEST_FACTOR)
+      console.timeEnd(title)
+    }
+
+    window.doTest = function() {
+      console.log(`Testing array with ${TEST_SIZE} using a factor of ${TEST_FACTOR} \n\n`)
+  
+      execute(add, arrayTest, 'Add processing in JS')
+      execute(multiply, arrayTest, 'Multiply processing in JS')
+      execute(divide, arrayTest, 'Divide processing in JS')
+      execute(subtract, arrayTest, 'Subtract processing in JS')
+      execute(fibonacci, fibArray, 'Fibonatti processing in JS')
+      console.info('===============================')
+      execute(addArray, arrayTest, 'Add processing in WASM')
+      execute(multiplyArray, arrayTest, 'Multiply processing in WASM')
+      execute(divideArray, arrayTest, 'Divide processing in WASM')
+      execute(subtractArray, arrayTest, 'Subtract processing in WASM')
+      execute(fibonacciArray, fibArray, 'Fibonatti processing in WASM')
+      console.info('===============================')
+      execute(addFor, arrayTest, 'Add processing with for in JS')
+      execute(multiplyFor, arrayTest, 'Multiply processing with for in JS')
+      execute(divideFor, arrayTest, 'Divide processing with for in JS')
+      execute(subtractFor, arrayTest, 'Subtract processing with for in JS')
+      execute(fibonacciFor, fibArray, 'Fibonatti processing with for in JS')
+      console.info('===============================')
+    }
+
+    window.doTest()
+  </script>
+</head>
+<body>
+  <div>
+    <h1>Vanilla Browser WASM vs JS vs Worker</h1>
+    <p>
+      This is a simple project to test execution time of basic math operations in the browser. AssemblyScript is being used for this test.
+    </p>
+    <p>
+      A web waker was also spawned to comparison.
+    </p>
+    <p>
+      Check the console for execution time.
+    </p>
+  </div>
+</body>
+</html>
